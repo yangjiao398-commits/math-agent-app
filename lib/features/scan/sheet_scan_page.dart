@@ -183,7 +183,14 @@ class _SheetScanPageState extends State<SheetScanPage> {
                         final p = raw as Map<String, dynamic>;
                         return DropdownMenuItem(
                           value: '${p['id']}',
-                          child: Text('${p['title'] ?? p['paper_code'] ?? '试卷'}'),
+                          child: Text(
+                            [
+                              p['title'] ?? p['paper_code'] ?? '试卷',
+                              p['province'],
+                              p['gaokao_paper'],
+                            ].where((e) => e != null && '$e'.trim().isNotEmpty).join(' · '),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         );
                       }).toList(),
                       onChanged: grading

@@ -40,11 +40,24 @@ class SessionController extends ChangeNotifier {
     return api.post('/api/app/auth/sms', {'phone': phone});
   }
 
-  Future<void> login(String phone, String code) async {
+  Future<void> login(
+    String phone,
+    String code, {
+    required String ageGroup,
+    required bool acceptMinorTerms,
+    required bool acceptIpTerms,
+    required bool guardianConsent,
+    required String termsVersion,
+  }) async {
     error = null;
     final data = await api.post('/api/app/auth/login', {
       'phone': phone,
       'code': code,
+      'age_group': ageGroup,
+      'accept_minor_terms': acceptMinorTerms,
+      'accept_ip_terms': acceptIpTerms,
+      'guardian_consent': guardianConsent,
+      'terms_version': termsVersion,
     });
     token = data['token'] as String?;
     user = data['user'] as Map<String, dynamic>?;
