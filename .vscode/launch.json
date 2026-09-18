@@ -1,0 +1,33 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "数理助理 (Chrome)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "deviceId": "chrome",
+      "args": ["--dart-define=API_BASE=http://127.0.0.1:3010"]
+    },
+    {
+      "name": "数理助理 (Edge)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "deviceId": "edge",
+      "args": ["--dart-define=API_BASE=http://127.0.0.1:3010"]
+    },
+    {
+      "name": "数理助理 (Cursor 内嵌浏览器)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "deviceId": "web-server",
+      "args": [
+        "--web-hostname=127.0.0.1",
+        "--web-port=8088",
+        "--dart-define=API_BASE=http://127.0.0.1:3010"
+      ]
+    }
+  ]
+}

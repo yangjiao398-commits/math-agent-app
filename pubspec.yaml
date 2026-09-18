@@ -1,0 +1,33 @@
+name: math_agent_app
+description: Paid Flutter client for the word-math-md exam system (iOS + Android).
+publish_to: "none"
+version: 0.1.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  http: ^1.2.2
+  http_parser: ^4.0.2
+  webview_flutter: ^4.10.0
+  webview_flutter_web: ^0.2.3+4
+  webview_flutter_platform_interface: ^2.10.0
+  web: ^1.1.1
+  shared_preferences: ^2.3.2
+  provider: ^6.1.2
+  share_plus: ^10.1.4
+  path_provider: ^2.1.5
+  url_launcher: ^6.3.1
+  qr_flutter: ^4.1.0
+  image_picker: ^1.1.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
