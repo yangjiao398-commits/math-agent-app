@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../config/theme.dart';
 import '../../core/auth/session.dart';
+import '../../ui/widgets.dart';
 import 'legal_copy.dart';
 import 'legal_doc_page.dart';
 
@@ -120,85 +122,119 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.fromLTRB(22, 20, 22, 32),
           children: [
-            const SizedBox(height: 12),
+            const AppLogoMark(size: 56),
+            const SizedBox(height: 16),
             Text('数理助理', style: Theme.of(context).textTheme.headlineMedium),
             const SizedBox(height: 8),
-            const Text('付费使用高考数学题库、知识点训练与公式预览。注册前须阅读并同意未成年人保护及知识产权条款。'),
-            const SizedBox(height: 24),
-            TextField(
-              controller: phone,
-              keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(labelText: '手机号'),
+            const Text(
+              '高考数学题库、知识点训练与公式预览。注册前请阅读并同意未成年人保护及知识产权条款。',
+              style: TextStyle(color: AppTheme.muted, height: 1.55),
             ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: code,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: '短信验证码'),
-            ),
-            const SizedBox(height: 20),
-            const Text('请选择年龄情况（必选）', style: TextStyle(fontWeight: FontWeight.w600)),
-            RadioGroup<String>(
-              groupValue: ageGroup,
-              onChanged: (v) => setState(() => ageGroup = v),
-              child: const Column(
-                children: const [
-                  RadioListTile<String>(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text('已满18周岁'),
-                    value: 'adult',
+            const SizedBox(height: 22),
+            AppCard(
+              child: Column(
+                children: [
+                  TextField(
+                    controller: phone,
+                    keyboardType: TextInputType.phone,
+                    decoration: const InputDecoration(
+                      labelText: '手机号',
+                      prefixIcon: Icon(Icons.phone_iphone_outlined),
+                    ),
                   ),
-                  RadioListTile<String>(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text('已满14周岁未满18周岁'),
-                    value: 'teen',
-                  ),
-                  RadioListTile<String>(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text('未满14周岁（须监护人代为注册）'),
-                    value: 'child',
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: code,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: '短信验证码',
+                      prefixIcon: Icon(Icons.sms_outlined),
+                    ),
                   ),
                 ],
               ),
             ),
-            CheckboxListTile(
-              contentPadding: EdgeInsets.zero,
-              value: acceptMinor,
-              onChanged: (v) => setState(() => acceptMinor = v ?? false),
-              controlAffinity: ListTileControlAffinity.leading,
-              title: _linkLine('我已阅读并同意', minorTitle, () => _openDoc(minorTitle, minorBody)),
-            ),
-            CheckboxListTile(
-              contentPadding: EdgeInsets.zero,
-              value: acceptIp,
-              onChanged: (v) => setState(() => acceptIp = v ?? false),
-              controlAffinity: ListTileControlAffinity.leading,
-              title: _linkLine('我已阅读并同意', ipTitle, () => _openDoc(ipTitle, ipBody)),
-            ),
-            CheckboxListTile(
-              contentPadding: EdgeInsets.zero,
-              value: guardianConsent,
-              onChanged: (v) => setState(() => guardianConsent = v ?? false),
-              controlAffinity: ListTileControlAffinity.leading,
-              title: Text(
-                _needsGuardian
-                    ? '监护人已代为阅读并同意上述条款（未满18周岁必选）'
-                    : '监护人已代为阅读并同意上述条款（未成年人使用时勾选）',
+            AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('请选择年龄情况', style: TextStyle(fontWeight: FontWeight.w800)),
+                  RadioGroup<String>(
+                    groupValue: ageGroup,
+                    onChanged: (v) => setState(() => ageGroup = v),
+                    child: const Column(
+                      children: [
+                        RadioListTile<String>(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text('已满18周岁'),
+                          value: 'adult',
+                        ),
+                        RadioListTile<String>(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text('已满14周岁未满18周岁'),
+                          value: 'teen',
+                        ),
+                        RadioListTile<String>(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text('未满14周岁（须监护人代为注册）'),
+                          value: 'child',
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 8),
+            AppCard(
+              padding: const EdgeInsets.fromLTRB(8, 6, 12, 6),
+              child: Column(
+                children: [
+                  CheckboxListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                    value: acceptMinor,
+                    onChanged: (v) => setState(() => acceptMinor = v ?? false),
+                    controlAffinity: ListTileControlAffinity.leading,
+                    title: _linkLine('我已阅读并同意', minorTitle, () => _openDoc(minorTitle, minorBody)),
+                  ),
+                  CheckboxListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                    value: acceptIp,
+                    onChanged: (v) => setState(() => acceptIp = v ?? false),
+                    controlAffinity: ListTileControlAffinity.leading,
+                    title: _linkLine('我已阅读并同意', ipTitle, () => _openDoc(ipTitle, ipBody)),
+                  ),
+                  CheckboxListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                    value: guardianConsent,
+                    onChanged: (v) => setState(() => guardianConsent = v ?? false),
+                    controlAffinity: ListTileControlAffinity.leading,
+                    title: Text(
+                      _needsGuardian
+                          ? '监护人已代为阅读并同意上述条款（未满18周岁必选）'
+                          : '监护人已代为阅读并同意上述条款（未成年人使用时勾选）',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 4),
             Row(
               children: [
-                OutlinedButton(
-                  onPressed: busy || !_accepted ? null : _sms,
-                  child: const Text('获取验证码'),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: busy || !_accepted ? null : _sms,
+                    child: const Text('获取验证码'),
+                  ),
                 ),
                 const SizedBox(width: 12),
-                FilledButton(
-                  onPressed: busy || !_accepted ? null : _login,
-                  child: const Text('同意并注册/登录'),
+                Expanded(
+                  flex: 2,
+                  child: FilledButton(
+                    onPressed: busy || !_accepted ? null : _login,
+                    child: Text(busy ? '请稍候…' : '同意并注册/登录'),
+                  ),
                 ),
               ],
             ),

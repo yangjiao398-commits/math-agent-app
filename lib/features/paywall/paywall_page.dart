@@ -6,8 +6,10 @@ import 'package:provider/provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../config/theme.dart';
 import '../../core/api/api_client.dart';
 import '../../core/auth/session.dart';
+import '../../ui/widgets.dart';
 
 class PaywallPage extends StatefulWidget {
   const PaywallPage({super.key});
@@ -132,96 +134,128 @@ class _PaywallPageState extends State<PaywallPage> {
     final mock = cfg['mock'] == true || cfg['provider'] == 'dev';
     final qr = '${pay['qr_code'] ?? ''}';
     final waiting = orderId != null && pay['mock'] != true;
+    final entitled = member['entitled'] == true;
+    final expiry = formatExpiry(member['expires_at']);
     return Scaffold(
       appBar: AppBar(title: const Text('开通会员')),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
         children: [
-          Text(
-            member['entitled'] == true
-                ? '当前会员：${member['plan']}，至 ${member['expires_at']}'
-                : '未开通或已过期，选择套餐后用微信或支付宝支付。',
+          AppCard(
+            color: entitled ? AppTheme.successSoft : AppTheme.accentSoft,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                StatusChip(
+                  label: entitled ? '会员有效' : '待开通',
+                  tone: entitled ? ChipTone.ok : ChipTone.warn,
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  entitled
+                      ? '当前套餐 ${member['plan'] ?? '会员'}${expiry.isEmpty ? '' : '，至 $expiry'}'
+                      : '选择套餐后用微信或支付宝支付，开通后即可使用全部题库。',
+                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, height: 1.45),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  mock
+                      ? '当前为开发模拟支付，确认后立即开通。'
+                      : '支付成功后会员时长从当前到期日顺延。',
+                  style: const TextStyle(color: AppTheme.muted, fontSize: 13),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            mock
-                ? '当前为开发模拟支付，确认后立即开通。上线请配置微信/支付宝商户号并将 APP_PAY_PROVIDER=live。'
-                : '支付成功后会员时长从当前到期日顺延。',
-            style: const TextStyle(color: Color(0xFF5C6B7A), fontSize: 13),
-          ),
-          if (error != null) ...[
-            const SizedBox(height: 8),
-            Text(error!, style: const TextStyle(color: Color(0xFFB42318))),
-          ],
-          if (pay.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    Text(
-                      pay['mock'] == true
-                          ? '请确认完成${pay['channel'] == 'alipay' ? '支付宝' : '微信'}支付'
-                          : '${pay['instruction'] ?? '请完成支付'}',
-                    ),
-                    if (qr.isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      QrImageView(data: qr, size: 220),
-                    ],
-                    if (waiting) ...[
-                      const SizedBox(height: 12),
-                      const CircularProgressIndicator(),
-                      const SizedBox(height: 8),
-                      const Text('等待支付结果…'),
-                    ],
-                    if (pay['mock'] == true) ...[
-                      const SizedBox(height: 12),
-                      FilledButton(
+          if (error != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(error!, style: const TextStyle(color: AppTheme.danger)),
+            ),
+          if (pay.isNotEmpty)
+            AppCard(
+              child: Column(
+                children: [
+                  Text(
+                    pay['mock'] == true
+                        ? '请确认完成${pay['channel'] == 'alipay' ? '支付宝' : '微信'}支付'
+                        : '${pay['instruction'] ?? '请完成支付'}',
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                    textAlign: TextAlign.center,
+                  ),
+                  if (qr.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    QrImageView(data: qr, size: 200),
+                  ],
+                  if (waiting) ...[
+                    const SizedBox(height: 12),
+                    const CircularProgressIndicator(),
+                    const SizedBox(height: 8),
+                    const Text('等待支付结果…'),
+                  ],
+                  if (pay['mock'] == true) ...[
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
                         onPressed: busy ? null : _confirmMock,
                         child: const Text('确认支付'),
                       ),
-                    ],
+                    ),
                   ],
-                ),
+                ],
               ),
             ),
-          ],
-          const SizedBox(height: 12),
           ...plans.map((raw) {
             final p = raw as Map<String, dynamic>;
             final fen = p['price_fen'] as int? ?? 0;
-            return Card(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text('${p['title']}'),
-                      subtitle: Text('${p['days']} 天'),
-                      trailing: Text('¥${(fen / 100).toStringAsFixed(0)}'),
-                    ),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: FilledButton(
-                            onPressed: busy ? null : () => _startPay(p, 'wechat'),
-                            child: const Text('微信支付'),
-                          ),
+            return AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('${p['title']}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
+                            const SizedBox(height: 4),
+                            Text('${p['days']} 天', style: const TextStyle(color: AppTheme.muted)),
+                          ],
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: busy ? null : () => _startPay(p, 'alipay'),
-                            child: const Text('支付宝'),
-                          ),
+                      ),
+                      Text(
+                        '¥${(fen / 100).toStringAsFixed(0)}',
+                        style: const TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.accent,
                         ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: FilledButton(
+                          onPressed: busy ? null : () => _startPay(p, 'wechat'),
+                          style: FilledButton.styleFrom(backgroundColor: const Color(0xFF07C160)),
+                          child: const Text('微信支付'),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: FilledButton(
+                          onPressed: busy ? null : () => _startPay(p, 'alipay'),
+                          style: FilledButton.styleFrom(backgroundColor: const Color(0xFF1677FF)),
+                          child: const Text('支付宝'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             );
           }),

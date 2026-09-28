@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/api/api_client.dart';
+import '../../ui/widgets.dart';
 import '../paywall/paywall_page.dart';
 import 'paper_reader_page.dart';
 
@@ -58,15 +59,14 @@ class _PapersPageState extends State<PapersPage> {
     }
   }
 
-  String _subtitle(Map<String, dynamic> p) {
-    final bits = [
+  List<String> _chips(Map<String, dynamic> p) {
+    return [
       p['province'],
       p['gaokao_paper'],
       p['semester'],
       p['exam_type'],
-    ].where((e) => (e ?? '').toString().trim().isNotEmpty).join(' · ');
-    final count = p['question_count'] ?? 0;
-    return bits.isEmpty ? '$count 题' : '$bits · $count 题';
+      p['question_count'] == null ? null : '${p['question_count']} 题',
+    ].where((e) => (e ?? '').toString().trim().isNotEmpty).map((e) => '$e').toList();
   }
 
   @override
@@ -76,71 +76,72 @@ class _PapersPageState extends State<PapersPage> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-            child: Row(
-              children: [
-                Expanded(
-                  child: DropdownButtonFormField<String?>(
-                    key: ValueKey('province-filter-${provinces.length}-$province'),
-                    isExpanded: true,
-                    decoration: const InputDecoration(
-                      labelText: '省份',
-                      border: OutlineInputBorder(),
-                      isDense: true,
-                    ),
-                    initialValue: province,
-                    items: [
-                      const DropdownMenuItem(value: null, child: Text('全部省份')),
-                      ...provinces.map(
-                        (p) => DropdownMenuItem(value: p, child: Text(p)),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: AppCard(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: DropdownButtonFormField<String?>(
+                      key: ValueKey('province-filter-${provinces.length}-$province'),
+                      isExpanded: true,
+                      decoration: const InputDecoration(
+                        labelText: '省份',
+                        isDense: true,
                       ),
-                    ],
-                    onChanged: (v) {
-                      setState(() => province = v);
-                      _load();
-                    },
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: DropdownButtonFormField<String?>(
-                    key: ValueKey('gaokao-filter-${gaokaoPapers.length}-$gaokaoPaper'),
-                    isExpanded: true,
-                    decoration: const InputDecoration(
-                      labelText: '全国卷',
-                      border: OutlineInputBorder(),
-                      isDense: true,
+                      initialValue: province,
+                      items: [
+                        const DropdownMenuItem(value: null, child: Text('全部省份')),
+                        ...provinces.map(
+                          (p) => DropdownMenuItem(value: p, child: Text(p)),
+                        ),
+                      ],
+                      onChanged: (v) {
+                        setState(() => province = v);
+                        _load();
+                      },
                     ),
-                    initialValue: gaokaoPaper,
-                    items: [
-                      const DropdownMenuItem(value: null, child: Text('全部试卷')),
-                      ...gaokaoPapers.map(
-                        (p) => DropdownMenuItem(value: p, child: Text(p)),
-                      ),
-                    ],
-                    onChanged: (v) {
-                      setState(() => gaokaoPaper = v);
-                      _load();
-                    },
                   ),
-                ),
-              ],
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: DropdownButtonFormField<String?>(
+                      key: ValueKey('gaokao-filter-${gaokaoPapers.length}-$gaokaoPaper'),
+                      isExpanded: true,
+                      decoration: const InputDecoration(
+                        labelText: '全国卷',
+                        isDense: true,
+                      ),
+                      initialValue: gaokaoPaper,
+                      items: [
+                        const DropdownMenuItem(value: null, child: Text('全部试卷')),
+                        ...gaokaoPapers.map(
+                          (p) => DropdownMenuItem(value: p, child: Text(p)),
+                        ),
+                      ],
+                      onChanged: (v) {
+                        setState(() => gaokaoPaper = v);
+                        _load();
+                      },
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           Expanded(
             child: loading
                 ? const Center(child: CircularProgressIndicator())
                 : error != null
-                    ? Center(child: Text(error!))
+                    ? EmptyHint(icon: Icons.error_outline, text: error!)
                     : papers.isEmpty
-                        ? const Center(child: Text('没有符合条件的试卷'))
+                        ? const EmptyHint(icon: Icons.menu_book_outlined, text: '没有符合条件的试卷')
                         : ListView.builder(
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                             itemCount: papers.length,
                             itemBuilder: (context, i) {
                               final p = papers[i] as Map<String, dynamic>;
-                              return ListTile(
-                                title: Text('${p['title'] ?? ''}'),
-                                subtitle: Text(_subtitle(p)),
+                              final chips = _chips(p);
+                              return AppCard(
                                 onTap: () => Navigator.of(context).push(
                                   MaterialPageRoute(
                                     builder: (_) => PaperReaderPage(
@@ -148,6 +149,29 @@ class _PapersPageState extends State<PapersPage> {
                                       title: '${p['title'] ?? '试卷'}',
                                     ),
                                   ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '${p['title'] ?? ''}',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 16,
+                                        height: 1.4,
+                                      ),
+                                    ),
+                                    if (chips.isNotEmpty) ...[
+                                      const SizedBox(height: 10),
+                                      Wrap(
+                                        spacing: 6,
+                                        runSpacing: 6,
+                                        children: chips
+                                            .map((c) => StatusChip(label: c, tone: ChipTone.accent))
+                                            .toList(),
+                                      ),
+                                    ],
+                                  ],
                                 ),
                               );
                             },

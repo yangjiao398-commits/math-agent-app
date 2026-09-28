@@ -32,6 +32,7 @@ class MathAgentApp extends StatelessWidget {
       ],
       child: MaterialApp(
         title: '数理助理',
+        debugShowCheckedModeBanner: false,
         theme: AppTheme.light(),
         home: const _Gate(),
       ),

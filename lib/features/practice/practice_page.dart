@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../config/theme.dart';
 import '../../core/api/api_client.dart';
+import '../../ui/widgets.dart';
 import '../question/katex_webview.dart';
 
 class PracticePage extends StatefulWidget {
@@ -74,48 +76,62 @@ class _PracticePageState extends State<PracticePage> {
       body: loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
               children: [
-                if (error != null) Text(error!),
-                Wrap(
-                  spacing: 8,
-                  children: points.take(40).map((raw) {
-                    final p = raw as Map<String, dynamic>;
-                    final code = '${p['code']}';
-                    final on = selected.contains(code);
-                    return FilterChip(
-                      label: Text(code),
-                      selected: on,
-                      onSelected: (v) {
-                        setState(() {
-                          if (v) {
-                            selected.add(code);
-                          } else {
-                            selected.remove(code);
-                          }
-                        });
-                      },
-                    );
-                  }).toList(),
+                if (error != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text(error!, style: const TextStyle(color: AppTheme.danger)),
+                  ),
+                AppCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('选择知识点', style: TextStyle(fontWeight: FontWeight.w800)),
+                      const SizedBox(height: 4),
+                      const Text('可多选，查找后预览公式题干。', style: TextStyle(color: AppTheme.muted)),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: points.take(40).map((raw) {
+                          final p = raw as Map<String, dynamic>;
+                          final code = '${p['code']}';
+                          final on = selected.contains(code);
+                          return FilterChip(
+                            label: Text(code),
+                            selected: on,
+                            onSelected: (v) {
+                              setState(() {
+                                if (v) {
+                                  selected.add(code);
+                                } else {
+                                  selected.remove(code);
+                                }
+                              });
+                            },
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 8),
                 Row(
                   children: [
-                    FilledButton(onPressed: _search, child: const Text('查找题目')),
+                    Expanded(child: FilledButton(onPressed: _search, child: const Text('查找题目'))),
                     const SizedBox(width: 8),
-                    OutlinedButton(onPressed: _preview, child: const Text('预览公式')),
+                    Expanded(child: OutlinedButton(onPressed: _preview, child: const Text('预览公式'))),
                   ],
                 ),
-                Text('命中 ${found.length} 题'),
+                const SizedBox(height: 12),
+                Text('已选 ${selected.length} 个知识点 · 命中 ${found.length} 题', style: const TextStyle(color: AppTheme.muted)),
+                const SizedBox(height: 8),
                 ...preview.map((raw) {
                   final q = raw as Map<String, dynamic>;
-                  return Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(10),
-                      child: KatexWebView(
-                        html: '${q['stemHtml'] ?? ''}',
-                        cssUrl: cssUrl,
-                      ),
+                  return AppCard(
+                    child: KatexWebView(
+                      html: '${q['stemHtml'] ?? ''}',
+                      cssUrl: cssUrl,
                     ),
                   );
                 }),

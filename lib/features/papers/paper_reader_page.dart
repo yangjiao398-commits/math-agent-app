@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../config/theme.dart';
 import '../../core/api/api_client.dart';
 import '../../core/auth/session.dart';
+import '../../ui/widgets.dart';
 import '../question/katex_html.dart';
 import '../question/katex_webview.dart';
 import 'share_pdf.dart';
@@ -23,6 +25,8 @@ class _PaperReaderPageState extends State<PaperReaderPage> {
   String? error;
   List<dynamic> questions = [];
   String? cssUrl;
+  String? headerHtml;
+  List<dynamic>? sections;
 
   @override
   void initState() {
@@ -38,6 +42,8 @@ class _PaperReaderPageState extends State<PaperReaderPage> {
             '/api/app/papers/${widget.paperId}/preview',
           );
       questions = data['questions'] as List? ?? [];
+      headerHtml = data['headerHtml'] as String?;
+      sections = data['sections'] as List?;
       cssUrl = (data['katex']?['css_url'] as String?) ?? cssUrl;
     } catch (e) {
       error = e.toString();
@@ -85,14 +91,14 @@ class _PaperReaderPageState extends State<PaperReaderPage> {
       appBar: AppBar(title: Text(widget.title)),
       body: loading
           ? const Center(child: CircularProgressIndicator())
-          : error != null
-              ? Center(child: Text(error!))
+              : error != null
+                  ? EmptyHint(icon: Icons.error_outline, text: error!)
               : Column(
                   children: [
                     Material(
-                      color: Colors.white,
+                      color: AppTheme.surface,
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
                         child: Row(
                           children: [
                             Builder(
@@ -107,9 +113,10 @@ class _PaperReaderPageState extends State<PaperReaderPage> {
                                           height: 16,
                                           child: CircularProgressIndicator(
                                             strokeWidth: 2,
+                                            color: Colors.white,
                                           ),
                                         )
-                                      : const Icon(Icons.share),
+                                      : const Icon(Icons.ios_share_rounded),
                                   label: Text(sharing ? '正在生成 PDF…' : '分享到微信'),
                                 );
                               },
@@ -118,7 +125,7 @@ class _PaperReaderPageState extends State<PaperReaderPage> {
                             const Expanded(
                               child: Text(
                                 '仅题干转成 PDF，手机上可选微信发给好友。',
-                                style: TextStyle(fontSize: 12, color: Color(0xFF5C6B7A)),
+                                style: TextStyle(fontSize: 12, color: AppTheme.muted, height: 1.4),
                               ),
                             ),
                           ],
@@ -128,7 +135,11 @@ class _PaperReaderPageState extends State<PaperReaderPage> {
                     const Divider(height: 1),
                     Expanded(
                       child: KatexWebView(
-                        html: paperQuestionsHtml(questions),
+                        html: paperQuestionsHtml(
+                          questions,
+                          headerHtml: headerHtml,
+                          sections: sections,
+                        ),
                         cssUrl: cssUrl,
                         expand: true,
                       ),

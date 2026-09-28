@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
+import '../../config/theme.dart';
 import '../../core/api/api_client.dart';
 import '../../core/auth/session.dart';
+import '../../ui/widgets.dart';
 import '../paywall/paywall_page.dart';
 
 class SheetScanPage extends StatefulWidget {
@@ -157,23 +159,32 @@ class _SheetScanPageState extends State<SheetScanPage> {
       body: loadingPapers
           ? const Center(child: CircularProgressIndicator())
           : ListView(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
               children: [
-                const Text('拍摄纸质答题卡，系统会 OCR 识别答案，并与所选试卷标准答案比对评分。'),
-                if (ocrHint != null) ...[
-                  const SizedBox(height: 8),
-                  Text(ocrHint!, style: const TextStyle(color: Color(0xFF5C6B7A), fontSize: 13)),
-                ],
-                if (error != null) ...[
-                  const SizedBox(height: 8),
-                  Text(error!, style: const TextStyle(color: Color(0xFFB42318))),
-                ],
-                const SizedBox(height: 12),
-                InputDecorator(
-                  decoration: const InputDecoration(
-                    labelText: '对应试卷',
-                    border: OutlineInputBorder(),
+                AppCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('拍摄纸质答题卡', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                      const SizedBox(height: 6),
+                      const Text(
+                        '系统会 OCR 识别答案，并与所选试卷标准答案比对评分。',
+                        style: TextStyle(color: AppTheme.muted, height: 1.45),
+                      ),
+                      if (ocrHint != null) ...[
+                        const SizedBox(height: 8),
+                        Text(ocrHint!, style: const TextStyle(color: AppTheme.muted, fontSize: 13)),
+                      ],
+                    ],
                   ),
+                ),
+                if (error != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text(error!, style: const TextStyle(color: AppTheme.danger)),
+                  ),
+                InputDecorator(
+                  decoration: const InputDecoration(labelText: '对应试卷'),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       isExpanded: true,
@@ -234,7 +245,7 @@ class _SheetScanPageState extends State<SheetScanPage> {
                         return Stack(
                           children: [
                             ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(14),
                               child: Image.memory(
                                 photos[i].bytes,
                                 width: 96,
@@ -263,9 +274,12 @@ class _SheetScanPageState extends State<SheetScanPage> {
                   ),
                 ],
                 const SizedBox(height: 12),
-                FilledButton(
-                  onPressed: grading ? null : _grade,
-                  child: Text(grading ? '正在识别评分…' : '识别并评分'),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: grading ? null : _grade,
+                    child: Text(grading ? '正在识别评分…' : '识别并评分'),
+                  ),
                 ),
                 if (grading) ...[
                   const SizedBox(height: 16),
@@ -273,41 +287,65 @@ class _SheetScanPageState extends State<SheetScanPage> {
                 ],
                 if (report != null) ...[
                   const SizedBox(height: 16),
-                  Card(
-                    child: ListTile(
-                      title: Text(
-                        '得分 ${report!['total_score']} / ${report!['max_score']}',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      subtitle: Text(
-                        '识别 ${report!['recognized_count']} 题 · 正确 ${report!['correct_count']} · '
-                        '待核对 ${report!['needs_review_count']} · 未识别 ${report!['missing_count']}'
-                        '${report!['ocr_engine'] != null && '${report!['ocr_engine']}'.isNotEmpty ? ' · 引擎 ${report!['ocr_engine']}' : ''}',
-                      ),
+                  AppCard(
+                    color: AppTheme.successSoft,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${report!['total_score']} / ${report!['max_score']}',
+                          style: const TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.success,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '识别 ${report!['recognized_count']} 题 · 正确 ${report!['correct_count']} · '
+                          '待核对 ${report!['needs_review_count']} · 未识别 ${report!['missing_count']}'
+                          '${report!['ocr_engine'] != null && '${report!['ocr_engine']}'.isNotEmpty ? ' · 引擎 ${report!['ocr_engine']}' : ''}',
+                          style: const TextStyle(color: AppTheme.muted),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 8),
                   ...(report!['items'] as List? ?? []).map((raw) {
                     final item = raw as Map<String, dynamic>;
                     final correct = item['is_correct'] == true;
                     final color = _statusColor('${item['status'] ?? ''}', correct);
-                    return Card(
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: color.withValues(alpha: 0.15),
-                          foregroundColor: color,
-                          child: Text('${item['question_no']}'),
-                        ),
-                        title: Text('第 ${item['question_no']} 题 · ${item['type_label'] ?? ''}'),
-                        subtitle: Text(
-                          '作答：${item['student_answer'] == null || '${item['student_answer']}'.isEmpty ? '（空）' : item['student_answer']}\n'
-                          '答案：${item['expected_answer'] ?? ''}',
-                        ),
-                        isThreeLine: true,
-                        trailing: Text(
-                          _statusLabel(item),
-                          style: TextStyle(color: color, fontWeight: FontWeight.w600),
-                        ),
+                    return AppCard(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          CircleAvatar(
+                            backgroundColor: color.withValues(alpha: 0.15),
+                            foregroundColor: color,
+                            child: Text('${item['question_no']}'),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '第 ${item['question_no']} 题 · ${item['type_label'] ?? ''}',
+                                  style: const TextStyle(fontWeight: FontWeight.w700),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '作答：${item['student_answer'] == null || '${item['student_answer']}'.isEmpty ? '（空）' : item['student_answer']}\n'
+                                  '答案：${item['expected_answer'] ?? ''}',
+                                  style: const TextStyle(color: AppTheme.muted, height: 1.45),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Text(
+                            _statusLabel(item),
+                            style: TextStyle(color: color, fontWeight: FontWeight.w700),
+                          ),
+                        ],
                       ),
                     );
                   }),
