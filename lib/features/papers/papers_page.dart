@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 
 import '../../core/api/api_client.dart';
 import '../../ui/widgets.dart';
-import '../paywall/paywall_page.dart';
 import 'paper_reader_page.dart';
 
 class PapersPage extends StatefulWidget {
@@ -49,9 +48,6 @@ class _PapersPageState extends State<PapersPage> {
       gaokaoPapers = (filters['gaokao_papers'] as List? ?? []).map((e) => '$e').toList();
     } on ApiException catch (e) {
       error = e.message;
-      if (e.needsPay && mounted) {
-        Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PaywallPage()));
-      }
     } catch (e) {
       error = e.toString();
     } finally {

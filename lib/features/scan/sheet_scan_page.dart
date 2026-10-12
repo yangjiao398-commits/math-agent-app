@@ -6,7 +6,7 @@ import '../../config/theme.dart';
 import '../../core/api/api_client.dart';
 import '../../core/auth/session.dart';
 import '../../ui/widgets.dart';
-import '../paywall/paywall_page.dart';
+import '../question/katex_webview.dart';
 
 class SheetScanPage extends StatefulWidget {
   const SheetScanPage({super.key});
@@ -55,9 +55,6 @@ class _SheetScanPageState extends State<SheetScanPage> {
       }
     } on ApiException catch (e) {
       error = e.message;
-      if (e.needsPay && mounted) {
-        Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PaywallPage()));
-      }
     } catch (e) {
       error = e.toString();
     } finally {
@@ -127,9 +124,6 @@ class _SheetScanPageState extends State<SheetScanPage> {
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => error = e.message);
-      if (e.needsPay) {
-        Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PaywallPage()));
-      }
     } catch (e) {
       if (mounted) setState(() => error = e.toString());
     } finally {
@@ -334,10 +328,12 @@ class _SheetScanPageState extends State<SheetScanPage> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  '作答：${item['student_answer'] == null || '${item['student_answer']}'.isEmpty ? '（空）' : item['student_answer']}\n'
-                                  '答案：${item['expected_answer'] ?? ''}',
+                                  '作答：${item['student_answer'] == null || '${item['student_answer']}'.isEmpty ? '（空）' : item['student_answer']}',
                                   style: const TextStyle(color: AppTheme.muted, height: 1.45),
                                 ),
+                                const SizedBox(height: 4),
+                                Text('答案', style: TextStyle(color: AppTheme.muted.withValues(alpha: 0.8), fontSize: 12)),
+                                _ExpectedAnswer(item: item),
                               ],
                             ),
                           ),
@@ -353,5 +349,23 @@ class _SheetScanPageState extends State<SheetScanPage> {
               ],
             ),
     );
+  }
+}
+
+class _ExpectedAnswer extends StatelessWidget {
+  const _ExpectedAnswer({required this.item});
+
+  final Map<String, dynamic> item;
+
+  @override
+  Widget build(BuildContext context) {
+    final html = '${item['expected_answer_html'] ?? ''}'.trim();
+    if (html.isEmpty) {
+      return Text(
+        '${item['expected_answer'] ?? ''}',
+        style: const TextStyle(color: AppTheme.muted, height: 1.45),
+      );
+    }
+    return KatexWebView(html: '<div class="rich-content">$html</div>', minHeight: 36);
   }
 }

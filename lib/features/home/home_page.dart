@@ -68,7 +68,7 @@ class HomePage extends StatelessWidget {
                 ),
                   const SizedBox(height: 12),
                   Text(
-                    entitled ? '题库与训练已全部解锁' : '开通会员后可练习全部试卷',
+                    entitled ? '题库与训练已全部解锁' : '题库、扫描和训练可以直接使用',
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 20,
@@ -79,7 +79,7 @@ class HomePage extends StatelessWidget {
                   Text(
                     entitled
                         ? (expiry.isEmpty ? '当前套餐：${member['plan'] ?? '会员'}' : '有效期至 $expiry')
-                        : '试用结束后需付费开通，支持微信和支付宝。',
+                        : '套餐购买在「开通会员」里单独进行。',
                     style: TextStyle(color: Colors.white.withValues(alpha: 0.86), height: 1.45),
                   ),
                 ],
