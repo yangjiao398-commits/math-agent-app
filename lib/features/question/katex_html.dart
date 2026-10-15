@@ -1,9 +1,33 @@
 import '../../config/env.dart';
 import '../../core/cdn/image_url.dart';
 
-String katexCssUrl(String? cssUrl) {
-  if (cssUrl != null && cssUrl.isNotEmpty) return cssUrl;
-  return '${AppEnv.apiBase}/vendor/katex/katex.min.css';
+final _loopbackOrigin = RegExp(
+  r'https?://(?:127\.0\.0\.1|localhost|\[::1\])(?::\d+)?',
+  caseSensitive: false,
+);
+
+/// Origin the running app can actually reach. A phone cannot open the
+/// server's loopback address, so KaTeX CSS and fonts must use this host.
+String reachableApiOrigin(String apiBase) {
+  final api = Uri.tryParse(apiBase);
+  if (api == null || api.host.isEmpty) {
+    return apiBase.replaceAll(RegExp(r'/+$'), '');
+  }
+  final port = api.hasPort ? ':${api.port}' : '';
+  return '${api.scheme}://${api.host}$port';
+}
+
+String rewriteLoopbackToApi(String value, {required String apiBase}) {
+  final origin = reachableApiOrigin(apiBase);
+  if (origin.isEmpty) return value;
+  return value.replaceAll(_loopbackOrigin, origin);
+}
+
+String katexCssUrl(String? cssUrl, {String? apiBase}) {
+  final origin = reachableApiOrigin(apiBase ?? AppEnv.apiBase);
+  final fallback = '$origin/vendor/katex/katex.min.css';
+  if (cssUrl == null || cssUrl.isEmpty) return fallback;
+  return rewriteLoopbackToApi(cssUrl, apiBase: origin);
 }
 
 String katexDocument({
@@ -14,7 +38,7 @@ String katexDocument({
 }) {
   final css = katexCssUrl(cssUrl);
   final body = rewriteHtmlImages(
-    html,
+    rewriteLoopbackToApi(html, apiBase: AppEnv.apiBase),
     apiBase: AppEnv.apiBase,
     cdnBase: AppEnv.cdnBase,
   );
@@ -51,8 +75,8 @@ setTimeout(report, 320);
     font-family: "Source Han Serif SC", "Noto Serif SC", "Songti SC", "PingFang SC", "Microsoft YaHei", serif;
   }
   .rich-content { line-height: 1.75; font-size: 16px; padding: 2px 0 8px; }
-  .rich-content .katex { font-size: 1.05em; }
-  .rich-content .katex-display { margin: 8px 0; overflow-x: auto; }
+  .rich-content .katex { font-size: 1.05em; line-height: 1.2; }
+  .rich-content .katex-display { margin: 8px 0; overflow-x: auto; overflow-y: hidden; }
   .rich-content img {
     max-width: 100%; height: auto; display: inline-block;
     vertical-align: middle; border-radius: 8px; background: #fff; margin: 4px 0;
@@ -97,8 +121,9 @@ setTimeout(report, 320);
     padding: 6px 8px;
     text-align: center;
   }
-  .q-block { margin-top: 12px; }
+  .q-block { margin-top: 12px; padding-top: 8px; border-top: 1px solid #E4DDD0; }
   .q-block h4 { margin: 0 0 6px; font-size: 14px; }
+  .q-empty { color: #667085; margin: 10px 0 0; }
 </style>
 </head>
 <body>
@@ -196,10 +221,27 @@ List<Map<String, dynamic>> _groupPaperQuestions(
   return groups;
 }
 
+void _writeSolutions(StringBuffer buf, Map<String, dynamic> question) {
+  final blocks = <(String, String)>[
+    ('【答案】', '${question['answerHtml'] ?? ''}'.trim()),
+    ('【分析】', '${question['analysisHtml'] ?? ''}'.trim()),
+    ('【详解】', '${question['detailHtml'] ?? ''}'.trim()),
+  ];
+  final present = blocks.where((block) => block.$2.isNotEmpty).toList();
+  if (present.isEmpty) {
+    buf.write('<p class="q-empty">本题暂无答案或分析。</p>');
+    return;
+  }
+  for (final block in present) {
+    buf.write('<div class="q-block"><h4>${block.$1}</h4>${block.$2}</div>');
+  }
+}
+
 String paperQuestionsHtml(
   List<dynamic> questions, {
   String? headerHtml,
   List<dynamic>? sections,
+  bool includeSolutions = false,
 }) {
   final buf = StringBuffer();
   final header = (headerHtml ?? '').trim();
@@ -229,6 +271,7 @@ String paperQuestionsHtml(
       if (score.isNotEmpty) buf.write(' · $score');
       buf.write('</div>');
       buf.write(q['stemHtml'] ?? '');
+      if (includeSolutions) _writeSolutions(buf, q);
       buf.write('</article>');
     }
     buf.write('</section>');

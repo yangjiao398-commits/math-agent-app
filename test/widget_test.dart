@@ -25,6 +25,28 @@ void main() {
     expect(html.contains('【详解】'), isFalse);
   });
 
+  test('paper html can show answers, analysis, and detailed solutions', () {
+    final html = paperQuestionsHtml(
+      [
+        {
+          'index': 4,
+          'stemHtml': '<p>题干</p>',
+          'answerHtml': r'<span class="katex">-\frac{\sqrt{3}}{2}</span>',
+          'analysisHtml': '<p>终边落在第三象限。</p>',
+          'detailHtml': '<p>先求正弦值。</p>',
+        },
+        {'index': 5, 'stemHtml': '<p>另一题</p>'},
+      ],
+      includeSolutions: true,
+    );
+    expect(html.contains('【答案】'), isTrue);
+    expect(html.contains('【分析】'), isTrue);
+    expect(html.contains('【详解】'), isTrue);
+    expect(html.contains(r'-\frac{\sqrt{3}}{2}'), isTrue);
+    expect(html.contains('本题暂无答案或分析。'), isTrue);
+    expect(html.indexOf('题干') < html.indexOf('【答案】'), isTrue);
+  });
+
   test('paper html shows exam masthead above question stems', () {
     final html = paperQuestionsHtml(
       [

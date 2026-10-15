@@ -22,6 +22,7 @@ class PaperReaderPage extends StatefulWidget {
 class _PaperReaderPageState extends State<PaperReaderPage> {
   bool loading = true;
   bool sharing = false;
+  bool showSolutions = false;
   String? error;
   List<dynamic> questions = [];
   String? cssUrl;
@@ -99,34 +100,51 @@ class _PaperReaderPageState extends State<PaperReaderPage> {
                       color: AppTheme.surface,
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-                        child: Row(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Builder(
-                              builder: (buttonContext) {
-                                return FilledButton.icon(
-                                  onPressed: sharing
-                                      ? null
-                                      : () => _sharePdf(buttonContext),
-                                  icon: sharing
-                                      ? const SizedBox(
-                                          width: 16,
-                                          height: 16,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            color: Colors.white,
-                                          ),
-                                        )
-                                      : const Icon(Icons.ios_share_rounded),
-                                  label: Text(sharing ? '正在生成 PDF…' : '分享到微信'),
-                                );
-                              },
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: [
+                                Builder(
+                                  builder: (buttonContext) {
+                                    return FilledButton.icon(
+                                      onPressed: sharing
+                                          ? null
+                                          : () => _sharePdf(buttonContext),
+                                      icon: sharing
+                                          ? const SizedBox(
+                                              width: 16,
+                                              height: 16,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                color: Colors.white,
+                                              ),
+                                            )
+                                          : const Icon(Icons.ios_share_rounded),
+                                      label: Text(sharing ? '正在生成 PDF…' : '分享到微信'),
+                                    );
+                                  },
+                                ),
+                                OutlinedButton.icon(
+                                  onPressed: () => setState(
+                                    () => showSolutions = !showSolutions,
+                                  ),
+                                  icon: Icon(
+                                    showSolutions
+                                        ? Icons.visibility_off_outlined
+                                        : Icons.fact_check_outlined,
+                                  ),
+                                  label: Text(showSolutions ? '收起答案及分析' : '答案及分析'),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 12),
-                            const Expanded(
-                              child: Text(
-                                '仅题干转成 PDF，手机上可选微信发给好友。',
-                                style: TextStyle(fontSize: 12, color: AppTheme.muted, height: 1.4),
-                              ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              '分享只含题干。答案及分析在页面中展开，内容与网页查看已入库试卷一致。',
+                              style: TextStyle(fontSize: 12, color: AppTheme.muted, height: 1.4),
                             ),
                           ],
                         ),
@@ -139,6 +157,7 @@ class _PaperReaderPageState extends State<PaperReaderPage> {
                           questions,
                           headerHtml: headerHtml,
                           sections: sections,
+                          includeSolutions: showSolutions,
                         ),
                         cssUrl: cssUrl,
                         expand: true,
